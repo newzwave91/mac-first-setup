@@ -73,16 +73,31 @@ while IFS='|' read -r id _c _m _t name desc _p _a; do
   case "$desc" in *" — "*) echo "ASSERT FAIL: $id 설명에 구분자(—) 포함"; exit 1 ;; esac
 done < <(catalog_lines "$APP_CATALOG")
 
-# ── SETTINGS_CATALOG: 구현된 8개 유지, won_backtick 프로필 확장 확인 ─
+# ── 앱 등급(tier) ────────────────────────────────────────────
+line=$(catalog_line_by_id chrome)
+assert_eq "required" "$(catalog_tier "$line")" "chrome tier는 required"
+line=$(catalog_line_by_id notion)
+assert_eq "recommended" "$(catalog_tier "$line")" "notion tier는 recommended"
+line=$(catalog_line_by_id figma)
+assert_eq "optional" "$(catalog_tier "$line")" "figma tier는 optional(또는 빈값 폴백)"
+
+required_ids=$(catalog_required_ids)
+for rid in chrome kakaotalk keka rectangle; do
+  assert_contains "$rid" "$required_ids" "필수 목록에 $rid"
+done
+n_required=$(printf '%s\n' "$required_ids" | grep -c .)
+assert_eq "4" "$n_required" "필수 앱은 정확히 4개(chrome·kakaotalk·keka·rectangle)"
+
+# ── SETTINGS_CATALOG: 구현된 10개 유지, won_backtick 프로필 확장 확인 ─
 settings_ids=$(settings_all_ids)
-for sid in tap_click three_finger_drag key_repeat finder_ext finder_bars screenshot_dir dock_tidy won_backtick; do
+for sid in tap_click three_finger_drag key_repeat finder_ext finder_bars screenshot_dir dock_tidy won_backtick battery_pct display_sleep; do
   assert_contains "$sid" "$settings_ids" "설정 목록에 $sid"
   if ! type "setting_apply_$sid" >/dev/null 2>&1; then
     echo "ASSERT FAIL: setting_apply_$sid 함수 없음"; exit 1
   fi
 done
 n_settings=$(printf '%s\n' "$settings_ids" | grep -c .)
-assert_eq "8" "$n_settings" "설정 카탈로그는 구현된 8개만"
+assert_eq "10" "$n_settings" "설정 카탈로그는 구현된 10개만"
 
 line=$(settings_line_by_id won_backtick)
 profiles=$(printf '%s' "$line" | cut -d'|' -f4)

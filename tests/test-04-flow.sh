@@ -40,4 +40,21 @@ export MFS_LOG_FILE="$tmp/log34.txt"
   assert_eq "1" "$rc4" "MFS_AUTO_APPS unset: 취소 경로 rc"
   assert_contains "DIALOG_CALLED" "$out4" "MFS_AUTO_APPS unset: 대화상자 호출"
 ) || exit 1
+
+# ── 등급 라벨: required는 [필수] 접두, optional은 접두 없음, 라벨→id 왕복 매핑 ──
+(
+  source_setup
+  lbl_chrome=$(app_label_for_id chrome)
+  assert_contains "[필수] " "$lbl_chrome" "chrome(required) 라벨에 [필수] 접두"
+  lbl_notion=$(app_label_for_id notion)
+  assert_contains "[권고] " "$lbl_notion" "notion(recommended) 라벨에 [권고] 접두"
+  lbl_figma=$(app_label_for_id figma)
+  assert_not_contains "[필수] " "$lbl_figma" "figma(optional) 라벨에 [필수] 접두 없어야"
+  assert_not_contains "[권고] " "$lbl_figma" "figma(optional) 라벨에 [권고] 접두 없어야"
+
+  assert_eq "chrome" "$(app_id_for_label "$lbl_chrome")" "chrome 접두 라벨 → id 왕복"
+  assert_eq "notion" "$(app_id_for_label "$lbl_notion")" "notion 접두 라벨 → id 왕복"
+  assert_eq "figma" "$(app_id_for_label "$lbl_figma")" "figma 무접두 라벨 → id 왕복"
+) || exit 1
+
 echo "test-04 pass"

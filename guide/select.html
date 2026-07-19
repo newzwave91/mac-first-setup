@@ -56,6 +56,12 @@
   .card-name { font-weight: 600; font-size: .95rem; margin-bottom: 3px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
   .card-desc { font-size: .82rem; color: var(--sub); }
   .badge { font-size: .68rem; background: #fff8e6; color: #8a6d1a; padding: 2px 7px; border-radius: 999px; font-weight: 500; }
+  .tier-badge { font-size: .68rem; padding: 2px 7px; border-radius: 999px; font-weight: 700; }
+  .tier-badge.required { background: rgba(255,59,48,.12); color: #d70015; }
+  .tier-badge.recommended { background: rgba(0,113,227,.12); color: #0071e3; }
+  .card.card-required { border-left: 3px solid #ff3b30; }
+  .legend-tier { color: var(--sub); font-size: .84rem; margin: 4px 0 22px; }
+  .legend-tier .tier-badge { margin-right: 2px; }
 
   .card-check { flex: 0 0 auto; width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; margin-top: 2px; }
 
@@ -87,6 +93,7 @@
     <h1>🍎 원하는 것만 골라 세팅하기</h1>
     <p class="sub">체크하면 아래 명령이 실시간으로 만들어집니다.</p>
     <a class="back" href="index.html">← 처음 세팅 도우미로 돌아가기</a>
+    <p class="legend-tier"><span class="tier-badge required">필수</span> 꼭 설치를 권해요 · <span class="tier-badge recommended">권고</span> 있으면 확실히 편해요 · 나머지는 취향껏</p>
   </header>
 
   <section class="profiles">
@@ -126,29 +133,29 @@
 
 <script>
 const APPS = [
-  {id:'chrome', cat:'브라우저', name:'Chrome', desc:'가장 무난한 표준 웹 브라우저', profiles:['office','student','creator','dev']},
-  {id:'kakaotalk', cat:'메신저', name:'카카오톡', desc:'국민 메신저를 PC에서도 사용', profiles:['office','student'], mas:true},
-  {id:'bitwarden', cat:'보안', name:'Bitwarden', desc:'무료로 쓸 수 있는 오픈소스 비밀번호 관리자', profiles:['office','dev']},
-  {id:'1password', cat:'보안', name:'1Password', desc:'가장 많이 쓰이는 구독형 비밀번호 관리자', profiles:['creator']},
-  {id:'notion', cat:'생산성', name:'Notion', desc:'메모 문서 할일을 한 곳에서 관리', profiles:['office','student','creator','dev']},
-  {id:'microsoft-office', cat:'생산성', name:'Microsoft Office', desc:'워드 엑셀 파워포인트 통합 패키지', profiles:['student']},
-  {id:'typora', cat:'생산성', name:'Typora', desc:'군더더기 없는 마크다운 편집기', profiles:['student']},
-  {id:'obsidian', cat:'생산성', name:'Obsidian', desc:'로컬 저장 방식의 무료 마크다운 노트', profiles:['student']},
-  {id:'raycast', cat:'생산성', name:'Raycast', desc:'Spotlight보다 강력한 실행 도구', profiles:['dev']},
-  {id:'dropbox', cat:'클라우드', name:'Dropbox', desc:'안정적이라는 평이 많은 파일 동기화 저장소', profiles:['office','student','creator']},
-  {id:'rectangle', cat:'유틸리티', name:'Rectangle', desc:'무료로 창을 단축키로 반반 배치', profiles:['office','student','dev']},
-  {id:'maccy', cat:'유틸리티', name:'Maccy', desc:'가볍고 빠른 무료 클립보드 관리자', profiles:['office','student']},
-  {id:'keka', cat:'유틸리티', name:'Keka', desc:'압축 해제까지 되는 만능 도구', profiles:['office','student','creator']},
-  {id:'aldente', cat:'유틸리티', name:'AlDente', desc:'배터리 충전 상한을 정해 수명 연장', profiles:['office']},
-  {id:'gureumkim', cat:'유틸리티', name:'구름 입력기', desc:'오픈소스 한글 입력기', profiles:['office','dev']},
-  {id:'cleanshot', cat:'유틸리티', name:'CleanShot X', desc:'주석과 스크롤 캡처까지 되는 고급 스크린샷', profiles:['creator']},
-  {id:'karabiner-elements', cat:'유틸리티', name:'Karabiner-Elements', desc:'한영키 백틱 등 키 매핑 커스터마이징', profiles:['dev']},
-  {id:'iina', cat:'미디어', name:'IINA', desc:'VLC보다 편하다는 평이 많은 동영상 플레이어', profiles:['creator']},
-  {id:'spotify', cat:'미디어', name:'Spotify', desc:'표준 음악 스트리밍 앱', profiles:['creator']},
-  {id:'vscode', cat:'개발', name:'VS Code', desc:'대다수 개발자가 쓰는 무료 코드 편집기', profiles:['dev']},
-  {id:'iterm2', cat:'개발', name:'iTerm2', desc:'맥 개발자의 기본기로 불리는 터미널', profiles:['dev']},
-  {id:'docker-desktop', cat:'개발', name:'Docker Desktop', desc:'컨테이너 기반 개발 환경', profiles:['dev']},
-  {id:'figma', cat:'디자인', name:'Figma', desc:'온라인 UI 디자인과 프로토타이핑 도구', profiles:['creator']}
+  {id:'chrome', cat:'브라우저', name:'Chrome', desc:'가장 무난한 표준 웹 브라우저', profiles:['office','student','creator','dev'], tier:'required'},
+  {id:'kakaotalk', cat:'메신저', name:'카카오톡', desc:'국민 메신저를 PC에서도 사용', profiles:['office','student'], mas:true, tier:'required'},
+  {id:'bitwarden', cat:'보안', name:'Bitwarden', desc:'무료로 쓸 수 있는 오픈소스 비밀번호 관리자', profiles:['office','dev'], tier:'recommended'},
+  {id:'1password', cat:'보안', name:'1Password', desc:'가장 많이 쓰이는 구독형 비밀번호 관리자', profiles:['creator'], tier:'optional'},
+  {id:'notion', cat:'생산성', name:'Notion', desc:'메모 문서 할일을 한 곳에서 관리', profiles:['office','student','creator','dev'], tier:'recommended'},
+  {id:'microsoft-office', cat:'생산성', name:'Microsoft Office', desc:'워드 엑셀 파워포인트 통합 패키지', profiles:['student'], tier:'optional'},
+  {id:'typora', cat:'생산성', name:'Typora', desc:'군더더기 없는 마크다운 편집기', profiles:['student'], tier:'optional'},
+  {id:'obsidian', cat:'생산성', name:'Obsidian', desc:'로컬 저장 방식의 무료 마크다운 노트', profiles:['student'], tier:'optional'},
+  {id:'raycast', cat:'생산성', name:'Raycast', desc:'Spotlight보다 강력한 실행 도구', profiles:['dev'], tier:'recommended'},
+  {id:'dropbox', cat:'클라우드', name:'Dropbox', desc:'안정적이라는 평이 많은 파일 동기화 저장소', profiles:['office','student','creator'], tier:'recommended'},
+  {id:'rectangle', cat:'유틸리티', name:'Rectangle', desc:'무료로 창을 단축키로 반반 배치', profiles:['office','student','dev'], tier:'required'},
+  {id:'maccy', cat:'유틸리티', name:'Maccy', desc:'가볍고 빠른 무료 클립보드 관리자', profiles:['office','student'], tier:'recommended'},
+  {id:'keka', cat:'유틸리티', name:'Keka', desc:'압축 해제까지 되는 만능 도구', profiles:['office','student','creator'], tier:'required'},
+  {id:'aldente', cat:'유틸리티', name:'AlDente', desc:'배터리 충전 상한을 정해 수명 연장', profiles:['office'], tier:'recommended'},
+  {id:'gureumkim', cat:'유틸리티', name:'구름 입력기', desc:'오픈소스 한글 입력기', profiles:['office','dev'], tier:'recommended'},
+  {id:'cleanshot', cat:'유틸리티', name:'CleanShot X', desc:'주석과 스크롤 캡처까지 되는 고급 스크린샷', profiles:['creator'], tier:'optional'},
+  {id:'karabiner-elements', cat:'유틸리티', name:'Karabiner-Elements', desc:'한영키 백틱 등 키 매핑 커스터마이징', profiles:['dev'], tier:'optional'},
+  {id:'iina', cat:'미디어', name:'IINA', desc:'VLC보다 편하다는 평이 많은 동영상 플레이어', profiles:['creator'], tier:'optional'},
+  {id:'spotify', cat:'미디어', name:'Spotify', desc:'표준 음악 스트리밍 앱', profiles:['creator'], tier:'optional'},
+  {id:'vscode', cat:'개발', name:'VS Code', desc:'대다수 개발자가 쓰는 무료 코드 편집기', profiles:['dev'], tier:'optional'},
+  {id:'iterm2', cat:'개발', name:'iTerm2', desc:'맥 개발자의 기본기로 불리는 터미널', profiles:['dev'], tier:'optional'},
+  {id:'docker-desktop', cat:'개발', name:'Docker Desktop', desc:'컨테이너 기반 개발 환경', profiles:['dev'], tier:'optional'},
+  {id:'figma', cat:'디자인', name:'Figma', desc:'온라인 UI 디자인과 프로토타이핑 도구', profiles:['creator'], tier:'optional'}
 ];
 
 const SETTINGS = [
@@ -159,7 +166,9 @@ const SETTINGS = [
   {id:'finder_bars', icon:'🧭', name:'Finder 경로·상태 막대', desc:'지금 어느 폴더인지 항상 보임', profiles:['office','student','creator','dev']},
   {id:'screenshot_dir', icon:'📸', name:'스크린샷 전용 폴더', desc:'바탕화면이 어질러지지 않음', profiles:['office','student','creator','dev']},
   {id:'dock_tidy', icon:'🧹', name:'Dock 정리', desc:'최근 앱 자동 표시 끄기', profiles:['office','student','creator','dev']},
-  {id:'won_backtick', icon:'⌥', name:'₩ 대신 백틱(`)', desc:'한글 자판에서도 백틱 입력(개발·마크다운용)', profiles:['student','dev']}
+  {id:'won_backtick', icon:'⌥', name:'₩ 대신 백틱(`)', desc:'한글 자판에서도 백틱 입력(개발·마크다운용)', profiles:['student','dev']},
+  {id:'battery_pct', icon:'🔋', name:'배터리 퍼센트 표시', desc:'메뉴 막대에 배터리 잔량 %가 보임', profiles:['office','student','creator','dev']},
+  {id:'display_sleep', icon:'🌙', name:'화면 자동 꺼짐 최적화', desc:'배터리 5분 전원 15분에 화면만 끄기', profiles:['office','student','creator','dev']}
 ];
 
 const CATEGORIES = ['브라우저','메신저','보안','생산성','클라우드','유틸리티','미디어','개발','디자인'];
@@ -171,7 +180,7 @@ let currentProfile = 'office';
 
 function buildAppCard(app) {
   const label = document.createElement('label');
-  label.className = 'card';
+  label.className = 'card' + (app.tier === 'required' ? ' card-required' : '');
   label.setAttribute('for', 'app-' + app.id);
 
   const iconWrap = document.createElement('div');
@@ -192,6 +201,12 @@ function buildAppCard(app) {
   const nameEl = document.createElement('div');
   nameEl.className = 'card-name';
   nameEl.appendChild(document.createTextNode(app.name));
+  if (app.tier === 'required' || app.tier === 'recommended') {
+    const tierBadge = document.createElement('span');
+    tierBadge.className = 'tier-badge ' + app.tier;
+    tierBadge.textContent = app.tier === 'required' ? '필수' : '권고';
+    nameEl.appendChild(tierBadge);
+  }
   if (app.mas) {
     const badge = document.createElement('span');
     badge.className = 'badge';
@@ -295,7 +310,9 @@ function highlightProfileBtn(profileId) {
 
 function applyProfile(profileId) {
   currentProfile = profileId;
-  selectedApps = new Set(APPS.filter(a => a.profiles.includes(profileId)).map(a => a.id));
+  const profileAppIds = APPS.filter(a => a.profiles.includes(profileId)).map(a => a.id);
+  const requiredAppIds = APPS.filter(a => a.tier === 'required').map(a => a.id);
+  selectedApps = new Set([...profileAppIds, ...requiredAppIds]);
   selectedSettings = new Set(SETTINGS.filter(s => s.profiles.includes(profileId)).map(s => s.id));
   syncCheckboxes();
   highlightProfileBtn(profileId);

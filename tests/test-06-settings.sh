@@ -52,4 +52,46 @@ out=$(MFS_DRY_RUN=1 MFS_NO_UI=1 MFS_AUTO_PROFILE=office MFS_AUTO_APPS="" \
       MFS_REPORT_FILE="$tmp/r.txt" MFS_BACKUP_DIR="$tmp/b2" bash "$(dirname "$0")/../setup.sh")
 assert_contains "선택한 설정: tap_click finder_ext" "$out" "설정 선택 로그"
 assert_contains "[dry-run] defaults write NSGlobalDomain AppleShowAllExtensions" "$out" "확장자 설정 dry-run"
+
+# ── 배터리 퍼센트·화면 자동꺼짐: 카탈로그 등록 확인 ───────────
+assert_contains "battery_pct" "$(settings_all_ids)" "설정 목록에 battery_pct"
+assert_contains "display_sleep" "$(settings_all_ids)" "설정 목록에 display_sleep"
+
+# (a) dry-run 통합 실행에 battery_pct·display_sleep 포함 → [dry-run] 로그 확인
+out3=$(MFS_DRY_RUN=1 MFS_NO_UI=1 MFS_AUTO_PROFILE=office MFS_AUTO_APPS="" \
+      MFS_AUTO_SETTINGS="battery_pct,display_sleep" MFS_LOG_FILE="$tmp/l3.txt" \
+      MFS_REPORT_FILE="$tmp/r3.txt" MFS_BACKUP_DIR="$tmp/b3" bash "$(dirname "$0")/../setup.sh")
+assert_contains "선택한 설정: battery_pct display_sleep" "$out3" "배터리·화면꺼짐 설정 선택 로그"
+assert_contains "[dry-run] defaults -currentHost write com.apple.controlcenter BatteryShowPercentage" "$out3" "배터리 퍼센트 dry-run"
+assert_contains "[dry-run] pmset -b displaysleep 5" "$out3" "화면 자동꺼짐 dry-run"
+
+# (b) display_sleep 실적용 경로: pmset·sudo를 서브셸 안에서 스텁으로 대체(실 pmset/sudo 절대 미실행)
+(
+  # shellcheck disable=SC1091  # setup.sh는 동적 상대경로라 정적 분석 불가(의도된 소스)
+  MFS_SOURCED=1 . "$(dirname "$0")/../setup.sh"
+  PMSET_LOG="$tmp/pmset.log"; : >"$PMSET_LOG"
+  # shellcheck disable=SC2329  # setting_apply_display_sleep(setup.sh, 소싱됨)이 간접 호출 — 정적분석 불가(의도된 스텁)
+  pmset() {
+    case "$1" in
+      -g) printf 'Battery Power:\n displaysleep 5\nAC Power:\n displaysleep 10\n' ;;
+      *) echo "pmset $*" >>"$PMSET_LOG" ;;
+    esac
+  }
+  # shellcheck disable=SC2329  # setting_apply_display_sleep(setup.sh, 소싱됨)이 간접 호출 — 정적분석 불가(의도된 스텁, 실 sudo 회피)
+  sudo() { "$@"; }
+  # shellcheck disable=SC2034  # setup.sh 함수(setting_apply_display_sleep)가 소싱된 셸의 전역으로 읽음
+  MFS_DRY_RUN=0
+  # shellcheck disable=SC2034  # setup.sh 함수(ensure_backup_dir)가 소싱된 셸의 전역으로 읽음
+  MFS_BACKUP_DIR="$tmp/b4"
+  setting_apply_display_sleep
+  rc=$?
+  assert_eq "0" "$rc" "display_sleep 적용 rc"
+  rec=$(cat "$MFS_BACKUP_DIR/복구.sh")
+  assert_contains "pmset -b displaysleep 5" "$rec" "복구라인: battery 원값(5분) 보존"
+  assert_contains "pmset -c displaysleep 10" "$rec" "복구라인: AC 원값(10분) 보존"
+  pmlog=$(cat "$PMSET_LOG")
+  assert_contains "pmset -b displaysleep 5" "$pmlog" "적용: battery 새 값 5분 기록"
+  assert_contains "pmset -c displaysleep 15" "$pmlog" "적용: AC 새 값 15분 기록"
+) || exit 1
+
 echo "test-06 pass"
