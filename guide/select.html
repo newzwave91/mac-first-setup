@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>원하는 것만 골라 세팅하기 — 맥 처음 세팅 도우미</title>
+<style>
+  :root { --accent: #0071e3; --bg: #f5f5f7; --card: #fff; --ink: #1d1d1f; --sub: #6e6e73; --line: #e8e8ed; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Apple SD Gothic Neo", -apple-system, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; padding-bottom: 190px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 40px 20px 48px; }
+  .head h1 { font-size: 1.8rem; margin-bottom: 6px; }
+  .head .sub { color: var(--sub); margin-bottom: 10px; }
+  .head .back { display: inline-block; color: var(--accent); text-decoration: none; font-size: .9rem; margin-bottom: 28px; }
+  .head .back:hover { text-decoration: underline; }
+
+  .section-title { font-size: 1.1rem; margin: 30px 0 14px; }
+  .cat-title { font-size: .95rem; color: var(--sub); margin: 22px 0 10px; font-weight: 600; }
+
+  .profiles { background: var(--card); border-radius: 16px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .profile-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .profile-btn, .clear-btn {
+    border: 1.5px solid var(--line); background: #fff; color: var(--ink);
+    border-radius: 999px; padding: 10px 18px; font-size: .92rem; cursor: pointer;
+    font-family: inherit; transition: background .15s, color .15s, border-color .15s;
+  }
+  .profile-btn:hover, .clear-btn:hover { border-color: var(--accent); }
+  .profile-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .clear-btn { color: #d70015; border-color: #f3c9c9; }
+  .clear-btn:hover { background: #fdeeee; border-color: #d70015; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+
+  .card {
+    display: flex; align-items: flex-start; gap: 12px; position: relative;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 14px 16px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    transition: border-color .15s, background .15s;
+  }
+  .card:hover { border-color: #c7c7cc; }
+  .card:has(.card-check:checked) { border-color: var(--accent); background: #f2f8ff; }
+
+  .icon-wrap {
+    flex: 0 0 auto; width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    font-size: 1.4rem; background: transparent;
+  }
+  .icon-wrap img { width: 40px; height: 40px; object-fit: contain; border-radius: 10px; }
+  .icon-fallback {
+    width: 40px; height: 40px; border-radius: 10px; background: var(--accent); color: #fff;
+    align-items: center; justify-content: center; font-weight: 700; font-size: 1.05rem;
+  }
+  .emoji-wrap { background: var(--line); }
+
+  .card-body { flex: 1 1 auto; min-width: 0; }
+  .card-name { font-weight: 600; font-size: .95rem; margin-bottom: 3px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .card-desc { font-size: .82rem; color: var(--sub); }
+  .badge { font-size: .68rem; background: #fff8e6; color: #8a6d1a; padding: 2px 7px; border-radius: 999px; font-weight: 500; }
+
+  .card-check { flex: 0 0 auto; width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; margin-top: 2px; }
+
+  .footnote { color: var(--sub); font-size: .88rem; margin-top: 36px; text-align: center; }
+
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; background: #fff;
+    border-top: 1px solid var(--line); box-shadow: 0 -2px 10px rgba(0,0,0,.06);
+    padding: 14px 20px; z-index: 10;
+  }
+  .bar-inner { max-width: 900px; margin: 0 auto; }
+  .summary { font-size: .88rem; color: var(--sub); margin-bottom: 8px; font-weight: 600; }
+  .cmdbox { display: flex; gap: 8px; }
+  .cmdbox code { flex: 1; background: #1d1d1f; color: #4ade80; padding: 12px 14px; border-radius: 10px; font-size: .78rem; overflow-x: auto; white-space: nowrap; }
+  .cmdbox button { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 0 20px; font-size: .92rem; cursor: pointer; }
+  .cmdbox button:active { opacity: .7; }
+  .cmdbox button:disabled { background: #c7c7cc; cursor: not-allowed; }
+  .hint { font-size: .8rem; color: #d70015; margin-top: 8px; }
+
+  @media (max-width: 640px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .bar { padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <h1>🍎 원하는 것만 골라 세팅하기</h1>
+    <p class="sub">체크하면 아래 명령이 실시간으로 만들어집니다.</p>
+    <a class="back" href="index.html">← 처음 세팅 도우미로 돌아가기</a>
+  </header>
+
+  <section class="profiles">
+    <h2 class="section-title" style="margin-top:0;">프로필로 빠르게 시작하기</h2>
+    <div class="profile-btns">
+      <button type="button" class="profile-btn" data-profile="office" onclick="applyProfile('office')">사무·일반</button>
+      <button type="button" class="profile-btn" data-profile="student" onclick="applyProfile('student')">학생·문서작업</button>
+      <button type="button" class="profile-btn" data-profile="creator" onclick="applyProfile('creator')">크리에이터</button>
+      <button type="button" class="profile-btn" data-profile="dev" onclick="applyProfile('dev')">개발자</button>
+      <button type="button" class="clear-btn" onclick="clearAll()">전체 해제</button>
+    </div>
+  </section>
+
+  <section id="apps-section">
+    <h2 class="section-title">📦 설치할 앱</h2>
+    <div id="apps-container"></div>
+  </section>
+
+  <section id="settings-section">
+    <h2 class="section-title">⚙️ 적용할 설정</h2>
+    <div id="settings-container" class="card-grid"></div>
+  </section>
+
+  <p class="footnote">복사한 명령을 터미널(⌘+스페이스 → 터미널)에 붙여넣고 return — 이후는 팝업 안내를 따르세요.</p>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <div class="summary" id="summary">앱 0개 · 설정 0개</div>
+    <div class="cmdbox">
+      <code id="cmd"></code>
+      <button id="copyBtn" onclick="copyCmd()">복사</button>
+    </div>
+    <div class="hint" id="hint" style="display:none;">앱이나 설정을 1개 이상 선택해야 명령을 복사할 수 있어요</div>
+  </div>
+</div>
+
+<script>
+const APPS = [
+  {id:'chrome', cat:'브라우저', name:'Chrome', desc:'가장 무난한 표준 웹 브라우저', profiles:['office','student','creator','dev']},
+  {id:'kakaotalk', cat:'메신저', name:'카카오톡', desc:'국민 메신저를 PC에서도 사용', profiles:['office','student'], mas:true},
+  {id:'bitwarden', cat:'보안', name:'Bitwarden', desc:'무료로 쓸 수 있는 오픈소스 비밀번호 관리자', profiles:['office','dev']},
+  {id:'1password', cat:'보안', name:'1Password', desc:'가장 많이 쓰이는 구독형 비밀번호 관리자', profiles:['creator']},
+  {id:'notion', cat:'생산성', name:'Notion', desc:'메모 문서 할일을 한 곳에서 관리', profiles:['office','student','creator','dev']},
+  {id:'microsoft-office', cat:'생산성', name:'Microsoft Office', desc:'워드 엑셀 파워포인트 통합 패키지', profiles:['student']},
+  {id:'typora', cat:'생산성', name:'Typora', desc:'군더더기 없는 마크다운 편집기', profiles:['student']},
+  {id:'obsidian', cat:'생산성', name:'Obsidian', desc:'로컬 저장 방식의 무료 마크다운 노트', profiles:['student']},
+  {id:'raycast', cat:'생산성', name:'Raycast', desc:'Spotlight보다 강력한 실행 도구', profiles:['dev']},
+  {id:'dropbox', cat:'클라우드', name:'Dropbox', desc:'안정적이라는 평이 많은 파일 동기화 저장소', profiles:['office','student','creator']},
+  {id:'rectangle', cat:'유틸리티', name:'Rectangle', desc:'무료로 창을 단축키로 반반 배치', profiles:['office','student','dev']},
+  {id:'maccy', cat:'유틸리티', name:'Maccy', desc:'가볍고 빠른 무료 클립보드 관리자', profiles:['office','student']},
+  {id:'keka', cat:'유틸리티', name:'Keka', desc:'압축 해제까지 되는 만능 도구', profiles:['office','student','creator']},
+  {id:'aldente', cat:'유틸리티', name:'AlDente', desc:'배터리 충전 상한을 정해 수명 연장', profiles:['office']},
+  {id:'gureumkim', cat:'유틸리티', name:'구름 입력기', desc:'오픈소스 한글 입력기', profiles:['office','dev']},
+  {id:'cleanshot', cat:'유틸리티', name:'CleanShot X', desc:'주석과 스크롤 캡처까지 되는 고급 스크린샷', profiles:['creator']},
+  {id:'karabiner-elements', cat:'유틸리티', name:'Karabiner-Elements', desc:'한영키 백틱 등 키 매핑 커스터마이징', profiles:['dev']},
+  {id:'iina', cat:'미디어', name:'IINA', desc:'VLC보다 편하다는 평이 많은 동영상 플레이어', profiles:['creator']},
+  {id:'spotify', cat:'미디어', name:'Spotify', desc:'표준 음악 스트리밍 앱', profiles:['creator']},
+  {id:'vscode', cat:'개발', name:'VS Code', desc:'대다수 개발자가 쓰는 무료 코드 편집기', profiles:['dev']},
+  {id:'iterm2', cat:'개발', name:'iTerm2', desc:'맥 개발자의 기본기로 불리는 터미널', profiles:['dev']},
+  {id:'docker-desktop', cat:'개발', name:'Docker Desktop', desc:'컨테이너 기반 개발 환경', profiles:['dev']},
+  {id:'figma', cat:'디자인', name:'Figma', desc:'온라인 UI 디자인과 프로토타이핑 도구', profiles:['creator']}
+];
+
+const SETTINGS = [
+  {id:'tap_click', icon:'👆', name:'트랙패드 탭 클릭', desc:'꾹 누르지 않고 살짝 대면 클릭', profiles:['office','student','creator','dev']},
+  {id:'three_finger_drag', icon:'🖱️', name:'세 손가락 드래그', desc:'세 손가락으로 창을 끌어서 이동', profiles:['office','student','creator','dev']},
+  {id:'key_repeat', icon:'⌨️', name:'키보드 반응 빠르게', desc:'길게 눌렀을 때 반복 입력이 빨라짐', profiles:['office','student','creator','dev']},
+  {id:'finder_ext', icon:'📄', name:'파일 확장자 항상 표시', desc:'.jpg .pdf 등 파일 종류 구분이 쉬워짐', profiles:['office','student','creator','dev']},
+  {id:'finder_bars', icon:'🧭', name:'Finder 경로·상태 막대', desc:'지금 어느 폴더인지 항상 보임', profiles:['office','student','creator','dev']},
+  {id:'screenshot_dir', icon:'📸', name:'스크린샷 전용 폴더', desc:'바탕화면이 어질러지지 않음', profiles:['office','student','creator','dev']},
+  {id:'dock_tidy', icon:'🧹', name:'Dock 정리', desc:'최근 앱 자동 표시 끄기', profiles:['office','student','creator','dev']},
+  {id:'won_backtick', icon:'⌥', name:'₩ 대신 백틱(`)', desc:'한글 자판에서도 백틱 입력(개발·마크다운용)', profiles:['student','dev']}
+];
+
+const CATEGORIES = ['브라우저','메신저','보안','생산성','클라우드','유틸리티','미디어','개발','디자인'];
+const CATEGORY_ICON = {'브라우저':'🌐','메신저':'💬','보안':'🔒','생산성':'📈','클라우드':'☁️','유틸리티':'🧰','미디어':'🎬','개발':'💻','디자인':'🎨'};
+
+let selectedApps = new Set();
+let selectedSettings = new Set();
+let currentProfile = 'office';
+
+function buildAppCard(app) {
+  const label = document.createElement('label');
+  label.className = 'card';
+  label.setAttribute('for', 'app-' + app.id);
+
+  const iconWrap = document.createElement('div');
+  iconWrap.className = 'icon-wrap';
+  const img = document.createElement('img');
+  img.src = 'assets/icons/' + app.id + '.png';
+  img.alt = '';
+  img.onerror = function () { this.style.display = 'none'; this.nextElementSibling.style.display = 'flex'; };
+  const fallback = document.createElement('div');
+  fallback.className = 'icon-fallback';
+  fallback.style.display = 'none';
+  fallback.textContent = app.name.charAt(0);
+  iconWrap.appendChild(img);
+  iconWrap.appendChild(fallback);
+
+  const body = document.createElement('div');
+  body.className = 'card-body';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'card-name';
+  nameEl.appendChild(document.createTextNode(app.name));
+  if (app.mas) {
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = 'App Store 로그인 필요';
+    nameEl.appendChild(badge);
+  }
+  const descEl = document.createElement('div');
+  descEl.className = 'card-desc';
+  descEl.textContent = app.desc;
+  body.appendChild(nameEl);
+  body.appendChild(descEl);
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.id = 'app-' + app.id;
+  checkbox.className = 'card-check';
+  checkbox.checked = selectedApps.has(app.id);
+  checkbox.addEventListener('change', () => {
+    if (checkbox.checked) selectedApps.add(app.id); else selectedApps.delete(app.id);
+    updateOutput();
+  });
+
+  label.appendChild(iconWrap);
+  label.appendChild(body);
+  label.appendChild(checkbox);
+  return label;
+}
+
+function buildSettingCard(s) {
+  const label = document.createElement('label');
+  label.className = 'card';
+  label.setAttribute('for', 'setting-' + s.id);
+
+  const iconWrap = document.createElement('div');
+  iconWrap.className = 'icon-wrap emoji-wrap';
+  iconWrap.textContent = s.icon;
+
+  const body = document.createElement('div');
+  body.className = 'card-body';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'card-name';
+  nameEl.textContent = s.name;
+  const descEl = document.createElement('div');
+  descEl.className = 'card-desc';
+  descEl.textContent = s.desc;
+  body.appendChild(nameEl);
+  body.appendChild(descEl);
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.id = 'setting-' + s.id;
+  checkbox.className = 'card-check';
+  checkbox.checked = selectedSettings.has(s.id);
+  checkbox.addEventListener('change', () => {
+    if (checkbox.checked) selectedSettings.add(s.id); else selectedSettings.delete(s.id);
+    updateOutput();
+  });
+
+  label.appendChild(iconWrap);
+  label.appendChild(body);
+  label.appendChild(checkbox);
+  return label;
+}
+
+function renderApps() {
+  const container = document.getElementById('apps-container');
+  container.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const items = APPS.filter(a => a.cat === cat);
+    if (!items.length) return;
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+    const h = document.createElement('h3');
+    h.className = 'cat-title';
+    h.textContent = (CATEGORY_ICON[cat] || '') + ' ' + cat;
+    block.appendChild(h);
+    const grid = document.createElement('div');
+    grid.className = 'card-grid';
+    items.forEach(app => grid.appendChild(buildAppCard(app)));
+    block.appendChild(grid);
+    container.appendChild(block);
+  });
+}
+
+function renderSettings() {
+  const grid = document.getElementById('settings-container');
+  grid.innerHTML = '';
+  SETTINGS.forEach(s => grid.appendChild(buildSettingCard(s)));
+}
+
+function syncCheckboxes() {
+  APPS.forEach(a => { const el = document.getElementById('app-' + a.id); if (el) el.checked = selectedApps.has(a.id); });
+  SETTINGS.forEach(s => { const el = document.getElementById('setting-' + s.id); if (el) el.checked = selectedSettings.has(s.id); });
+}
+
+function highlightProfileBtn(profileId) {
+  document.querySelectorAll('.profile-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.profile === profileId);
+  });
+}
+
+function applyProfile(profileId) {
+  currentProfile = profileId;
+  selectedApps = new Set(APPS.filter(a => a.profiles.includes(profileId)).map(a => a.id));
+  selectedSettings = new Set(SETTINGS.filter(s => s.profiles.includes(profileId)).map(s => s.id));
+  syncCheckboxes();
+  highlightProfileBtn(profileId);
+  updateOutput();
+}
+
+function clearAll() {
+  selectedApps = new Set();
+  selectedSettings = new Set();
+  syncCheckboxes();
+  highlightProfileBtn(null);
+  updateOutput();
+}
+
+function buildCommand() {
+  const apps = APPS.filter(a => selectedApps.has(a.id)).map(a => a.id).join(',');
+  const settings = SETTINGS.filter(s => selectedSettings.has(s.id)).map(s => s.id).join(',');
+  return 'MFS_AUTO_PROFILE=' + currentProfile + ' MFS_AUTO_APPS="' + apps + '" MFS_AUTO_SETTINGS="' + settings + '" bash -c "$(curl -fsSL https://raw.githubusercontent.com/newzwave91/mac-first-setup/main/setup.sh)"';
+}
+
+function updateOutput() {
+  document.getElementById('summary').textContent = '앱 ' + selectedApps.size + '개 · 설정 ' + selectedSettings.size + '개';
+  document.getElementById('cmd').textContent = buildCommand();
+  const copyBtn = document.getElementById('copyBtn');
+  const hint = document.getElementById('hint');
+  const empty = selectedApps.size === 0 && selectedSettings.size === 0;
+  copyBtn.disabled = empty;
+  hint.style.display = empty ? 'block' : 'none';
+}
+
+function copyCmd() {
+  const text = document.getElementById('cmd').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    const original = btn.textContent;
+    btn.textContent = '복사됨 ✓';
+    setTimeout(() => { btn.textContent = original; }, 2000);
+  });
+}
+
+renderApps();
+renderSettings();
+applyProfile('office');
+</script>
+</body>
+</html>
