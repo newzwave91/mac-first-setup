@@ -25,15 +25,34 @@ macos_supported() { # Sonoma(14) 이상
 # ── 앱 카탈로그 ─────────────────────────────────────────────
 # 형식: id|카테고리|method(cask/mas)|token|표시명|설명|profiles|appfile
 # 규칙: 설명에 쉼표 금지(다중선택 파싱). profiles는 쉼표 구분.
+# 출처: docs/research/app-curation.md (SSOT). cask 토큰은 formulae.brew.sh API로 전수 검증(tests/verify-casks.sh).
+# 카카오톡은 Homebrew cask 미제공(404 확인)이라 mas 방식 — token은 App Store 숫자 ID(iTunes lookup API로 검증).
+# gureumkim·karabiner-elements는 pkg 설치형이라 cask API에 app 아티팩트가 없어 appfile을 비워둠
+# (brew list --cask로 설치여부를 정확히 판별하므로 기능상 문제 없음).
 APP_CATALOG='
-chrome|브라우저|cask|google-chrome|Chrome|익숙한 웹 브라우저|office,student,creator,dev|Google Chrome.app
-kakaotalk|메신저|cask|kakaotalk|카카오톡|PC에서도 카톡|office,student,creator,dev|KakaoTalk.app
-notion|생산성|cask|notion|Notion|메모·문서·할일 관리|office,student|Notion.app
-raycast|생산성|cask|raycast|Raycast|Spotlight보다 강력한 실행 도구|office,student,creator,dev|Raycast.app
-rectangle|유틸리티|cask|rectangle|Rectangle|창을 단축키로 반반 배치|office,student,creator,dev|Rectangle.app
-keka|유틸리티|cask|keka|Keka|압축·해제 만능 도구|office,student,creator,dev|Keka.app
-iina|미디어|cask|iina|IINA|맥에서 가장 편한 동영상 플레이어|office,student,creator|IINA.app
-vscode|개발|cask|visual-studio-code|VS Code|코드 편집기|dev|Visual Studio Code.app
+chrome|브라우저|cask|google-chrome|Chrome|가장 무난한 표준 웹 브라우저|office,student,creator,dev|Google Chrome.app
+kakaotalk|메신저|mas|869223134|카카오톡|국민 메신저를 PC에서도 사용|office,student|KakaoTalk.app
+bitwarden|보안|cask|bitwarden|Bitwarden|무료로 쓸 수 있는 오픈소스 비밀번호 관리자|office,dev|Bitwarden.app
+1password|보안|cask|1password|1Password|가장 많이 쓰이는 구독형 비밀번호 관리자|creator|1Password.app
+notion|생산성|cask|notion|Notion|메모 문서 할일을 한 곳에서 관리|office,student,dev|Notion.app
+microsoft-office|생산성|cask|microsoft-office|Microsoft Office|워드 엑셀 파워포인트 통합 패키지|student|Microsoft Word.app
+typora|생산성|cask|typora|Typora|군더더기 없는 마크다운 편집기|student|Typora.app
+obsidian|생산성|cask|obsidian|Obsidian|로컬 저장 방식의 무료 마크다운 노트|student|Obsidian.app
+raycast|생산성|cask|raycast|Raycast|Spotlight보다 강력한 실행 도구|dev|Raycast.app
+dropbox|클라우드|cask|dropbox|Dropbox|안정적이라는 평이 많은 파일 동기화 저장소|office,student,creator|Dropbox.app
+rectangle|유틸리티|cask|rectangle|Rectangle|무료로 창을 단축키로 반반 배치|office,student,dev|Rectangle.app
+maccy|유틸리티|cask|maccy|Maccy|가볍고 빠른 무료 클립보드 관리자|office,student|Maccy.app
+keka|유틸리티|cask|keka|Keka|압축 해제까지 되는 만능 도구|office,student,creator|Keka.app
+aldente|유틸리티|cask|aldente|AlDente|배터리 충전 상한을 정해 수명 연장|office|AlDente.app
+gureumkim|유틸리티|cask|gureumkim|구름 입력기|오픈소스 한글 입력기|office,dev|
+cleanshot|유틸리티|cask|cleanshot|CleanShot X|주석과 스크롤 캡처까지 되는 고급 스크린샷|creator|CleanShot X.app
+karabiner-elements|유틸리티|cask|karabiner-elements|Karabiner-Elements|한영키 백틱 등 키 매핑 커스터마이징|dev|
+iina|미디어|cask|iina|IINA|VLC보다 편하다는 평이 많은 동영상 플레이어|creator|IINA.app
+spotify|미디어|cask|spotify|Spotify|표준 음악 스트리밍 앱|creator|Spotify.app
+vscode|개발|cask|visual-studio-code|VS Code|대다수 개발자가 쓰는 무료 코드 편집기|dev|Visual Studio Code.app
+iterm2|개발|cask|iterm2|iTerm2|맥 개발자의 기본기로 불리는 터미널|dev|iTerm.app
+docker-desktop|개발|cask|docker-desktop|Docker Desktop|컨테이너 기반 개발 환경|dev|Docker.app
+figma|디자인|cask|figma|Figma|온라인 UI 디자인과 프로토타이핑 도구|creator|Figma.app
 '
 
 catalog_lines() { # $1=카탈로그 내용 → 빈 줄·주석 제거
@@ -62,7 +81,7 @@ finder_ext|파일 확장자 항상 표시|.jpg .pdf 등 파일 종류 구분이 
 finder_bars|Finder 경로·상태 막대|지금 어느 폴더인지 항상 보임|office,student,creator,dev
 screenshot_dir|스크린샷 전용 폴더|바탕화면이 어질러지지 않음|office,student,creator,dev
 dock_tidy|Dock 정리|최근 앱 자동 표시 끄기|office,student,creator,dev
-won_backtick|₩ 대신 백틱(`)|한글 자판에서도 백틱 입력(개발·마크다운용)|dev
+won_backtick|₩ 대신 백틱(`)|한글 자판에서도 백틱 입력(개발·마크다운용)|student,dev
 '
 
 settings_all_ids() { catalog_lines "$SETTINGS_CATALOG" | cut -d'|' -f1; }
