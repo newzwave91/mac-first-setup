@@ -78,7 +78,7 @@ ui_alert() {
 }
 ui_confirm() { # 0=계속 1=취소
   [ "$MFS_NO_UI" = "1" ] && return 0
-  osascript -e "display dialog \"$(as_quote "$1")\" with title \"$MFS_TITLE\" buttons {\"취소\",\"계속\"} default button 2 with icon note" >/dev/null 2>&1
+  osascript -e "display dialog \"$(as_quote "$1")\" with title \"$MFS_TITLE\" buttons {\"취소\",\"계속\"} cancel button \"취소\" default button 2 with icon note" >/dev/null 2>&1
 }
 ui_choose_one() { # $1=프롬프트 $2=항목들(개행) → 선택 출력 / 취소=rc1
   [ "$MFS_NO_UI" = "1" ] && return 0
