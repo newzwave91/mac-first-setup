@@ -329,17 +329,26 @@ EOF
   chmod +x "$MFS_BACKUP_DIR/복구.sh"
 }
 
-backup_domain() { # $1=도메인 [$2="-currentHost"] — 도메인당 1회 전체 백업
-  case " $MFS_BACKED_DOMAINS " in *" $1 "*) return 0 ;; esac
+backup_domain() { # $1=도메인 [$2="-currentHost"] — 도메인×스코프당 1회 전체 백업
+  local domain="$1" scope="${2:-}" key
+  key="$domain${scope:+.currentHost}"
+  case " $MFS_BACKED_DOMAINS " in *" $key "*) return 0 ;; esac
   ensure_backup_dir
-  if [ "$2" = "-currentHost" ]; then
-    defaults -currentHost export "$1" "$MFS_BACKUP_DIR/$1.currentHost.plist" 2>/dev/null &&
-      printf 'defaults -currentHost import %s "%s.currentHost.plist"\n' "$1" "$1" >>"$MFS_BACKUP_DIR/복구.sh"
+  if [ "$scope" = "-currentHost" ]; then
+    if defaults -currentHost export "$domain" "$MFS_BACKUP_DIR/$key.plist" 2>/dev/null; then
+      printf 'defaults -currentHost import %s "%s.plist"\n' "$domain" "$key" >>"$MFS_BACKUP_DIR/복구.sh"
+    else
+      # 원래 도메인이 없었음 → 복구 = 도메인 삭제(원상태 재현)
+      printf 'defaults -currentHost delete %s 2>/dev/null\n' "$domain" >>"$MFS_BACKUP_DIR/복구.sh"
+    fi
   else
-    defaults export "$1" "$MFS_BACKUP_DIR/$1.plist" 2>/dev/null &&
-      printf 'defaults import %s "%s.plist"\n' "$1" "$1" >>"$MFS_BACKUP_DIR/복구.sh"
+    if defaults export "$domain" "$MFS_BACKUP_DIR/$key.plist" 2>/dev/null; then
+      printf 'defaults import %s "%s.plist"\n' "$domain" "$key" >>"$MFS_BACKUP_DIR/복구.sh"
+    else
+      printf 'defaults delete %s 2>/dev/null\n' "$domain" >>"$MFS_BACKUP_DIR/복구.sh"
+    fi
   fi
-  MFS_BACKED_DOMAINS="$MFS_BACKED_DOMAINS $1"
+  MFS_BACKED_DOMAINS="$MFS_BACKED_DOMAINS $key"
 }
 
 set_default() { # $1=도메인 $2=키 이후=defaults write 인자들 — 백업 후 적용(또는 dry-run 로그)
