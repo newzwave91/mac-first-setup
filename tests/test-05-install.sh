@@ -33,4 +33,42 @@ EOF
 APP_CATALOG='bad|유틸리티|cask|bad-cask|배드|테스트용|office|ZZZBad.app'
 install_one bad
 assert_contains "bad" "$FAILED_ITEMS" "실패 목록 기록"
+
+# ── mas 설치 실패 경로: FAILED_ITEMS·MANUAL_ITEMS(수동 안내) 기록 ──
+cat >"$stub/brew" <<'EOF'
+#!/bin/bash
+echo "$*" >>"$BREW_LOG"
+exit 0
+EOF
+chmod +x "$stub/brew"
+cat >"$stub/mas" <<'EOF'
+#!/bin/bash
+exit 1
+EOF
+chmod +x "$stub/mas"
+# shellcheck disable=SC2034  # setup.sh 함수(install_one)가 소싱된 셸의 전역으로 읽음
+APP_CATALOG='mtest|메신저|mas|999999|마스테스트|테스트용|office|ZZZMasApp.app'
+FAILED_ITEMS=""; MANUAL_ITEMS=""
+install_one mtest
+assert_contains "mtest" "$FAILED_ITEMS" "mas 실패 → 실패 목록 기록"
+assert_contains "마스테스트" "$MANUAL_ITEMS" "mas 실패 → 수동 안내에 표시명 포함"
+
+# ── CLT(Xcode Command Line Tools) 대기 타임아웃: 최대 600초 후 rc1 + 수동 강등 ──
+# 서브셸에서 xcode-select/sleep을 오버라이드해 다른 테스트를 오염시키지 않는다.
+(
+  # shellcheck disable=SC2329  # ensure_clt(setup.sh, 소싱됨)가 간접 호출 — 정적분석 불가(의도된 스텁)
+  xcode-select() { case "$1" in -p) return 1 ;; esac; return 0; }
+  # shellcheck disable=SC2329  # ensure_clt의 대기 루프가 간접 호출 — 정적분석 불가(의도된 스텁, 무한대기 회피용 noop)
+  sleep() { :; }
+  # shellcheck disable=SC2034  # setup.sh 함수(ensure_clt/ui_info)가 소싱된 셸의 전역으로 읽음
+  MFS_NO_UI=1
+  # shellcheck disable=SC2034  # setup.sh 함수(ensure_clt)가 소싱된 셸의 전역으로 읽음
+  MFS_DRY_RUN=0
+  MANUAL_ITEMS=""
+  ensure_clt
+  rc=$?
+  assert_eq "1" "$rc" "CLT 대기 타임아웃 → rc1"
+  assert_contains "개발자 도구" "$MANUAL_ITEMS" "CLT 대기 타임아웃 → 수동 안내 기록"
+) || exit 1
+
 echo "test-05 pass"

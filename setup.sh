@@ -273,7 +273,16 @@ ensure_clt() {
   ui_info "먼저 Apple 기본 개발자 도구(무료)를 설치합니다.
 잠시 후 설치 창이 뜨면 [설치]를 눌러주세요. 몇 분 걸릴 수 있습니다."
   xcode-select --install >/dev/null 2>&1
-  until xcode-select -p >/dev/null 2>&1; do sleep 10; done
+  local waited=0
+  until xcode-select -p >/dev/null 2>&1; do
+    sleep 10
+    waited=$((waited + 10))
+    if [ "$waited" -ge 600 ]; then
+      log "개발자 도구 설치가 확인되지 않아 계속 진행합니다 (10분 초과)"
+      report_add_manual "Apple 개발자 도구가 설치되지 않았습니다 — 터미널에서 xcode-select --install 을 다시 실행해 주세요"
+      return 1
+    fi
+  done
   log "개발자 도구 설치 완료"
 }
 
@@ -406,11 +415,11 @@ setting_apply_won_backtick() {
   if [ "$MFS_DRY_RUN" = "1" ]; then log "[dry-run] KeyBindings: ₩→백틱"; return 0; fi
   ensure_backup_dir
   mkdir -p "$HOME/Library/KeyBindings"
-  local kb="$HOME/Library/KeyBindings/DefaultkeyBinding.dict"
+  local kb="$HOME/Library/KeyBindings/DefaultKeyBinding.dict"
   if [ -f "$kb" ]; then
     if grep -qs '₩' "$kb"; then log "₩→백틱 이미 설정됨(스킵)"; return 0; fi
-    cp "$kb" "$MFS_BACKUP_DIR/DefaultkeyBinding.dict.bak"
-    printf 'cp "DefaultkeyBinding.dict.bak" "%s"\n' "$kb" >>"$MFS_BACKUP_DIR/복구.sh"
+    cp "$kb" "$MFS_BACKUP_DIR/DefaultKeyBinding.dict.bak"
+    printf 'cp "DefaultKeyBinding.dict.bak" "%s"\n' "$kb" >>"$MFS_BACKUP_DIR/복구.sh"
     log "기존 KeyBindings 파일이 있어 건너뜁니다 — 리포트 참고"
     report_add_manual "₩→백틱: 기존 키바인딩 파일이 있어 자동 적용하지 않았습니다"
     return 0
