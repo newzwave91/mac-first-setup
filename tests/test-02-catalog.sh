@@ -39,6 +39,7 @@ assert_contains "kakaotalk" "$student_ids" "student 기본셋에 카카오톡"
 creator_ids=$(catalog_default_ids_for_profile creator)
 assert_contains "figma" "$creator_ids" "creator 기본셋에 Figma"
 assert_contains "1password" "$creator_ids" "creator 기본셋에 1password"
+assert_contains "notion" "$creator_ids" "creator 기본셋에 notion (리서치 문서 크리에이터 체크셋)"
 assert_not_contains "vscode" "$creator_ids" "creator 기본셋에 vscode 없어야"
 
 dev_ids=$(catalog_default_ids_for_profile dev)

@@ -34,7 +34,7 @@ chrome|브라우저|cask|google-chrome|Chrome|가장 무난한 표준 웹 브라
 kakaotalk|메신저|mas|869223134|카카오톡|국민 메신저를 PC에서도 사용|office,student|KakaoTalk.app
 bitwarden|보안|cask|bitwarden|Bitwarden|무료로 쓸 수 있는 오픈소스 비밀번호 관리자|office,dev|Bitwarden.app
 1password|보안|cask|1password|1Password|가장 많이 쓰이는 구독형 비밀번호 관리자|creator|1Password.app
-notion|생산성|cask|notion|Notion|메모 문서 할일을 한 곳에서 관리|office,student,dev|Notion.app
+notion|생산성|cask|notion|Notion|메모 문서 할일을 한 곳에서 관리|office,student,creator,dev|Notion.app
 microsoft-office|생산성|cask|microsoft-office|Microsoft Office|워드 엑셀 파워포인트 통합 패키지|student|Microsoft Word.app
 typora|생산성|cask|typora|Typora|군더더기 없는 마크다운 편집기|student|Typora.app
 obsidian|생산성|cask|obsidian|Obsidian|로컬 저장 방식의 무료 마크다운 노트|student|Obsidian.app
