@@ -52,6 +52,53 @@ catalog_default_ids_for_profile() { # $1=프로필 id
   done
 }
 
+# ── UI 레이어 (osascript) ────────────────────────────────────
+MFS_TITLE="맥 세팅 도우미"
+
+as_quote() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
+
+as_list_from_lines() { # stdin 줄들 → AppleScript 리스트 리터럴
+  local out="" line
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    out="$out\"$(as_quote "$line")\","
+  done
+  printf '{%s}' "${out%,}"
+}
+
+ui_info() {
+  [ "$MFS_NO_UI" = "1" ] && return 0
+  osascript -e "display dialog \"$(as_quote "$1")\" with title \"$MFS_TITLE\" buttons {\"확인\"} default button 1 with icon note" >/dev/null 2>&1
+  return 0
+}
+ui_alert() {
+  [ "$MFS_NO_UI" = "1" ] && return 0
+  osascript -e "display alert \"$MFS_TITLE\" message \"$(as_quote "$1")\" as warning" >/dev/null 2>&1
+  return 0
+}
+ui_confirm() { # 0=계속 1=취소
+  [ "$MFS_NO_UI" = "1" ] && return 0
+  osascript -e "display dialog \"$(as_quote "$1")\" with title \"$MFS_TITLE\" buttons {\"취소\",\"계속\"} default button 2 with icon note" >/dev/null 2>&1
+}
+ui_choose_one() { # $1=프롬프트 $2=항목들(개행) → 선택 출력 / 취소=rc1
+  [ "$MFS_NO_UI" = "1" ] && return 0
+  local items res
+  items=$(printf '%s\n' "$2" | as_list_from_lines)
+  res=$(osascript -e "choose from list $items with title \"$MFS_TITLE\" with prompt \"$(as_quote "$1")\"" 2>/dev/null) || return 1
+  [ "$res" = "false" ] && return 1
+  printf '%s\n' "$res"
+}
+ui_choose_multi() { # $1=프롬프트 $2=항목들(개행) $3=기본선택(개행) → 선택들 개행 출력 / 취소=rc1
+  [ "$MFS_NO_UI" = "1" ] && return 0
+  local items defs res
+  items=$(printf '%s\n' "$2" | as_list_from_lines)
+  defs=$(printf '%s\n' "$3" | as_list_from_lines)
+  res=$(osascript -e "choose from list $items with title \"$MFS_TITLE\" with prompt \"$(as_quote "$1")\" default items $defs with multiple selections allowed" 2>/dev/null) || return 1
+  [ "$res" = "false" ] && return 1
+  printf '%s\n' "$res" | sed 's/, /\
+/g'   # 항목 라벨에 쉼표 금지 전제 (Global Constraints)
+}
+
 main() {
   log "맥 세팅 도우미 v${MFS_VERSION} 시작"
 }
