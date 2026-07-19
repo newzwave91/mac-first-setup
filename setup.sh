@@ -417,19 +417,88 @@ apply_settings() {
   fi
 }
 
+# ── Dock 구성 ───────────────────────────────────────────────
+configure_dock() {
+  [ -n "$SELECTED_APPS" ] || return 0
+  if [ "$MFS_DRY_RUN" = "1" ]; then log "[dry-run] Dock에 설치 앱 추가"; return 0; fi
+  if ! command -v dockutil >/dev/null 2>&1; then
+    brew install dockutil >/dev/null 2>&1 || {
+      report_add_manual "원하는 앱을 응용 프로그램 폴더에서 Dock으로 드래그해 고정하세요"
+      return 0
+    }
+  fi
+  local id line appfile
+  for id in $SELECTED_APPS; do
+    line=$(catalog_line_by_id "$id"); appfile=$(catalog_field "$line" 8)
+    [ -n "$appfile" ] && [ -e "/Applications/$appfile" ] &&
+      dockutil --add "/Applications/$appfile" --no-restart >/dev/null 2>&1
+  done
+  killall Dock >/dev/null 2>&1
+}
+
+# ── 리포트 ─────────────────────────────────────────────────
+item_display_name() { # id → 사람이 읽는 이름 (앱/설정/기타)
+  case "$1" in
+    설정:*)
+      local sid="${1#설정:}" line
+      line=$(settings_line_by_id "$sid")
+      if [ -n "$line" ]; then printf '%s' "$line" | cut -d'|' -f2; else printf '%s' "$1"; fi ;;
+    *)
+      local line; line=$(catalog_line_by_id "$1")
+      if [ -n "$line" ]; then catalog_field "$line" 5; else printf '%s' "$1"; fi ;;
+  esac
+}
+print_items() { # $1=개행 목록 $2=글머리
+  printf '%s' "$1" | while IFS= read -r it; do
+    [ -n "$it" ] && printf '%s %s\n' "$2" "$(item_display_name "$it")"
+  done
+}
+write_report() {
+  {
+    echo "맥 세팅 도우미 결과 리포트 — $(date '+%Y-%m-%d %H:%M')"
+    echo "================================================"
+    echo ""
+    echo "[잘 끝난 것]"
+    print_items "$OK_ITEMS" "✓"
+    echo ""
+    echo "[실패한 것 — 나중에 다시 실행하면 이 항목만 다시 시도합니다]"
+    if [ -n "$FAILED_ITEMS" ]; then print_items "$FAILED_ITEMS" "✗"; else echo "(없음)"; fi
+    echo ""
+    echo "[직접 해야 할 것]"
+    printf '%s' "$MANUAL_ITEMS" | while IFS= read -r it; do [ -n "$it" ] && echo "· $it"; done
+    echo ""
+    if [ -n "${MFS_BACKUP_DIR:-}" ] && [ -d "${MFS_BACKUP_DIR:-/nonexistent}" ]; then
+      echo "[되돌리고 싶을 때]"
+      echo "· $MFS_BACKUP_DIR/복구.sh 를 더블클릭(또는 실행)하면 설정이 원래대로 돌아갑니다"
+    fi
+  } >"$MFS_REPORT_FILE"
+  log "리포트 저장: $MFS_REPORT_FILE"
+}
+final_dialog() {
+  [ "$MFS_NO_UI" = "1" ] && return 0
+  local pick
+  pick=$(osascript -e "display dialog \"세팅이 끝났습니다! 🎉\n\n결과와 '직접 해야 할 일'을 리포트에서 확인하세요.\" with title \"$MFS_TITLE\" buttons {\"마침\",\"리포트 열기\"} default button 2 with icon note" 2>/dev/null)
+  case "$pick" in *"리포트 열기"*) open -e "$MFS_REPORT_FILE" ;; esac
+  return 0
+}
+
 main() {
   log "맥 세팅 도우미 v${MFS_VERSION} 시작"
   if ! macos_supported; then
-    ui_alert "이 도구는 macOS Sonoma(14) 이상에서 동작합니다. 현재 버전에서는 일부 설정이 적용되지 않을 수 있습니다."
+    ui_alert "이 도구는 macOS Sonoma(14) 이상에서 동작합니다. 일부 설정이 적용되지 않을 수 있습니다."
     log "경고: 미지원 macOS 버전 $(sw_vers -productVersion)"
   fi
-  flow_welcome || { log "사용자가 취소했습니다"; return 0; }
-  flow_pick_profile || { log "사용자가 취소했습니다"; return 0; }
-  flow_pick_apps || { log "사용자가 취소했습니다"; return 0; }
-  flow_pick_settings || { log "사용자가 취소했습니다"; return 0; }
+  flow_welcome        || { log "사용자가 취소했습니다"; return 0; }
+  flow_pick_profile   || { log "사용자가 취소했습니다"; return 0; }
+  flow_pick_apps      || { log "사용자가 취소했습니다"; return 0; }
+  flow_pick_settings  || { log "사용자가 취소했습니다"; return 0; }
   warm_sudo || { ui_alert "관리자 암호 확인에 실패해 종료합니다."; return 1; }
   install_apps
   apply_settings
+  configure_dock
+  write_report
+  final_dialog
+  log "완료"
 }
 
 if [ "${MFS_SOURCED:-0}" != "1" ]; then
