@@ -176,6 +176,92 @@ flow_pick_apps() {
   log "선택한 앱: $SELECTED_APPS"
 }
 
+# ── 결과 누적 ───────────────────────────────────────────────
+OK_ITEMS=""; FAILED_ITEMS=""; MANUAL_ITEMS=""
+report_add_ok()     { OK_ITEMS="$OK_ITEMS$1
+"; }
+report_add_fail()   { FAILED_ITEMS="$FAILED_ITEMS$1
+"; }
+report_add_manual() { MANUAL_ITEMS="$MANUAL_ITEMS$1
+"; }
+
+# ── 설치 엔진 ───────────────────────────────────────────────
+MFS_APPS_DIR="${MFS_APPS_DIR:-/Applications}"   # 테스트 오버라이드용
+
+warm_sudo() {
+  [ "$MFS_DRY_RUN" = "1" ] && return 0
+  log "관리자 암호가 필요합니다. 입력해도 화면에 표시되지 않지만 정상 입력되고 있습니다."
+  sudo -v || return 1
+  # 진행 동안 sudo 타임스탬프 유지 (스크립트 종료 시 자동 소멸)
+  ( while kill -0 "$$" 2>/dev/null; do sudo -n true 2>/dev/null; sleep 50; done ) &
+}
+
+ensure_clt() {
+  if xcode-select -p >/dev/null 2>&1; then log "개발자 도구 확인됨"; return 0; fi
+  if [ "$MFS_DRY_RUN" = "1" ]; then log "[dry-run] Xcode Command Line Tools 설치 필요"; return 0; fi
+  ui_info "먼저 Apple 기본 개발자 도구(무료)를 설치합니다.
+잠시 후 설치 창이 뜨면 [설치]를 눌러주세요. 몇 분 걸릴 수 있습니다."
+  xcode-select --install >/dev/null 2>&1
+  until xcode-select -p >/dev/null 2>&1; do sleep 10; done
+  log "개발자 도구 설치 완료"
+}
+
+ensure_homebrew() {
+  if command -v brew >/dev/null 2>&1; then log "Homebrew 확인됨"; return 0; fi
+  if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"; log "Homebrew 경로 연결됨"; return 0; fi
+  if [ "$MFS_DRY_RUN" = "1" ]; then log "[dry-run] Homebrew 설치 필요"; return 0; fi
+  ui_info "앱 설치 도구(Homebrew)를 설치합니다. 터미널에 진행 상황이 표시됩니다."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" </dev/tty || return 1
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+  # 다음 터미널에서도 brew가 잡히도록 (중복 추가 방지)
+  if ! grep -qs 'brew shellenv' "$HOME/.zprofile" 2>/dev/null; then
+    # shellcheck disable=SC2016  # 의도적 리터럴 — .zprofile에 그대로 기록되어 새 셸 시작 시 평가됨
+    printf '\neval "$(/opt/homebrew/bin/brew shellenv)"\n' >>"$HOME/.zprofile"
+  fi
+  log "Homebrew 설치 완료"
+}
+
+install_one() { # $1=앱 id — 실패해도 rc0 (누적 기록으로 처리)
+  local line name token method appfile
+  line=$(catalog_line_by_id "$1"); [ -n "$line" ] || return 0
+  method=$(catalog_field "$line" 3); token=$(catalog_field "$line" 4)
+  name=$(catalog_field "$line" 5); appfile=$(catalog_field "$line" 8)
+  if [ -n "$appfile" ] && [ -e "$MFS_APPS_DIR/$appfile" ]; then
+    log "$name — 이미 설치되어 있어 건너뜁니다"; report_add_ok "$1"; return 0
+  fi
+  if [ "$MFS_DRY_RUN" = "1" ]; then log "[dry-run] $method 설치: $token ($name)"; report_add_ok "$1"; return 0; fi
+  case "$method" in
+    cask)
+      if brew list --cask "$token" >/dev/null 2>&1; then
+        log "$name — 이미 설치됨(스킵)"; report_add_ok "$1"; return 0
+      fi
+      log "$name 설치 중..."
+      if brew install --cask "$token" >/dev/null 2>&1; then
+        report_add_ok "$1"; log "$name 설치 완료"
+      else
+        report_add_fail "$1"; log "$name 설치 실패 — 리포트에 기록합니다"
+      fi ;;
+    mas)
+      if ! command -v mas >/dev/null 2>&1; then brew install mas >/dev/null 2>&1; fi
+      if mas install "$token" >/dev/null 2>&1; then
+        report_add_ok "$1"; log "$name 설치 완료"
+      else
+        report_add_fail "$1"
+        report_add_manual "$name — App Store에 로그인한 뒤 App Store에서 직접 설치해 주세요"
+        log "$name 설치 실패(App Store 로그인 필요할 수 있음)"
+      fi ;;
+  esac
+  return 0
+}
+
+install_apps() {
+  [ -n "$SELECTED_APPS" ] || { log "선택한 앱이 없습니다"; return 0; }
+  ensure_clt
+  ensure_homebrew || { log "Homebrew 설치 실패 — 앱 설치를 건너뜁니다"; report_add_fail "homebrew"; return 0; }
+  local id
+  for id in $SELECTED_APPS; do install_one "$id"; done
+}
+
 main() {
   log "맥 세팅 도우미 v${MFS_VERSION} 시작"
   if ! macos_supported; then
@@ -185,6 +271,8 @@ main() {
   flow_welcome || { log "사용자가 취소했습니다"; return 0; }
   flow_pick_profile || { log "사용자가 취소했습니다"; return 0; }
   flow_pick_apps || { log "사용자가 취소했습니다"; return 0; }
+  warm_sudo || { ui_alert "관리자 암호 확인에 실패해 종료합니다."; return 1; }
+  install_apps
 }
 
 if [ "${MFS_SOURCED:-0}" != "1" ]; then
