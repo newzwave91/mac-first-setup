@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>맥 처음 세팅 도우미</title>
+<style>
+  :root { --accent: #0071e3; --bg: #f5f5f7; --card: #fff; --ink: #1d1d1f; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Apple SD Gothic Neo", -apple-system, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.7; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 48px 20px 80px; }
+  h1 { font-size: 2rem; margin-bottom: 8px; }
+  .sub { color: #6e6e73; margin-bottom: 40px; }
+  .step { background: var(--card); border-radius: 16px; padding: 28px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .step h2 { font-size: 1.15rem; margin-bottom: 10px; }
+  .num { display: inline-block; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; text-align: center; line-height: 28px; font-size: .95rem; margin-right: 8px; }
+  .kbd { background: #e8e8ed; border-radius: 6px; padding: 2px 8px; font-family: ui-monospace, monospace; font-size: .9em; }
+  .cmdbox { display: flex; gap: 8px; margin-top: 14px; }
+  .cmdbox code { flex: 1; background: #1d1d1f; color: #4ade80; padding: 14px 16px; border-radius: 10px; font-size: .82rem; overflow-x: auto; white-space: nowrap; }
+  .cmdbox button { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 0 22px; font-size: .95rem; cursor: pointer; }
+  .cmdbox button:active { opacity: .7; }
+  .note { background: #fff8e6; border-radius: 10px; padding: 12px 16px; margin-top: 14px; font-size: .9rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍎 맥 처음 세팅 도우미</h1>
+  <p class="sub">아래 3단계만 따라 하면, 나머지는 화면에 뜨는 창에서 클릭만 하면 됩니다.</p>
+
+  <div class="step">
+    <h2><span class="num">1</span>터미널 열기</h2>
+    <p>키보드에서 <span class="kbd">⌘ command</span> + <span class="kbd">스페이스바</span>를 함께 누르고,
+    <b>터미널</b>이라고 입력한 뒤 <span class="kbd">return</span>을 누르세요.<br>
+    까만(또는 하얀) 글자 입력 창이 하나 열립니다. 이게 터미널이에요.</p>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">2</span>아래 명령 복사하기</h2>
+    <div class="cmdbox">
+      <code id="cmd">bash -c "$(curl -fsSL RAW_URL_PLACEHOLDER)"</code>
+      <button onclick="copyCmd()" id="btn">복사</button>
+    </div>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">3</span>터미널에 붙여넣고 return</h2>
+    <p>터미널 창을 클릭한 뒤 <span class="kbd">⌘ command</span> + <span class="kbd">V</span>로 붙여넣고
+    <span class="kbd">return</span>을 누르세요. 잠시 후 <b>선택 창이 뜨면 이제 클릭만 하면 됩니다.</b></p>
+    <div class="note">🔑 중간에 <b>암호를 물어보면</b> 맥에 로그인할 때 쓰는 암호를 입력하세요.
+    입력해도 화면에 아무것도 표시되지 않지만 정상적으로 입력되고 있는 거예요.</div>
+  </div>
+</div>
+<script>
+function copyCmd() {
+  const t = document.getElementById('cmd').textContent;
+  navigator.clipboard.writeText(t).then(() => {
+    const b = document.getElementById('btn');
+    b.textContent = '복사됨 ✓'; setTimeout(() => { b.textContent = '복사'; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
