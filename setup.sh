@@ -199,7 +199,7 @@ app_id_for_label() { # 라벨의 표시명 부분으로 역매핑
 }
 
 flow_pick_apps() {
-  if [ -n "${MFS_AUTO_APPS:-}" ]; then
+  if [ -n "${MFS_AUTO_APPS+x}" ]; then
     local raw id valid=""
     raw=$(printf '%s' "$MFS_AUTO_APPS" | tr ',' ' ')
     for id in $raw; do
