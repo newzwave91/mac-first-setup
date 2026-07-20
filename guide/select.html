@@ -384,7 +384,7 @@ function clearAll() {
 function buildCommand() {
   const apps = APPS.filter(a => selectedApps.has(a.id)).map(a => a.id).join(',');
   const settings = SETTINGS.filter(s => selectedSettings.has(s.id)).map(s => s.id).join(',');
-  return 'MFS_AUTO_PROFILE=' + currentProfile + ' MFS_AUTO_APPS="' + apps + '" MFS_AUTO_SETTINGS="' + settings + '" bash -c "$(curl -fsSL https://raw.githubusercontent.com/newzwave91/mac-first-setup/main/setup.sh)"';
+  return 'MFS_AUTO_PROFILE=' + currentProfile + ' MFS_AUTO_APPS="' + apps + '" MFS_AUTO_SETTINGS="' + settings + '" bash -c "$(curl -fsSL https://mac-first-setup.vercel.app/setup.sh)"';
 }
 
 function updateOutput() {

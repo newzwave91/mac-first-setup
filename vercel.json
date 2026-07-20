@@ -1,8 +1,8 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/", "destination": "/guide/index.html" },
-    { "source": "/select", "destination": "/guide/select.html" }
+    { "source": "/", "destination": "/guide" },
+    { "source": "/select", "destination": "/guide/select" }
   ],
   "headers": [
     {

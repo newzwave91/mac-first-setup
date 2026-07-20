@@ -10,11 +10,11 @@ macOS 팝업창 클릭만으로 진행하는 세팅 도구입니다.
 
 ## 사용법
 
-👉 **안내 페이지**: https://newzwave91.github.io/mac-first-setup/guide/ (지인에게는 이 링크만 보내면 됩니다)
+👉 **안내 페이지**: https://mac-first-setup.vercel.app (지인에게는 이 링크만 보내면 됩니다)
 
 또는 터미널에서:
 
-    bash -c "$(curl -fsSL https://raw.githubusercontent.com/newzwave91/mac-first-setup/main/setup.sh)"
+    bash -c "$(curl -fsSL https://mac-first-setup.vercel.app/setup.sh)"
 
 ## 개발
 
