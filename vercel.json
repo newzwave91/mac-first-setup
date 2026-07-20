@@ -1,0 +1,15 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/guide/index.html" },
+    { "source": "/select", "destination": "/guide/select.html" }
+  ],
+  "headers": [
+    {
+      "source": "/setup.sh",
+      "headers": [
+        { "key": "Content-Type", "value": "text/x-shellscript; charset=utf-8" }
+      ]
+    }
+  ]
+}
